@@ -2,6 +2,10 @@
 import json, os
 import paho.mqtt.client as mqtt
 
+
+
+
+
 def send_json_to_thingsboard(payload: dict, host: str, port: int, token: str, use_tls: bool=False):
     """
     Envía datos a ThingsBoard en dos pasos:
@@ -28,12 +32,17 @@ def send_json_to_thingsboard(payload: dict, host: str, port: int, token: str, us
 
         if plano:
             client.publish(topic, json.dumps(plano), qos=1)
+            print("\n🔵 DEBUG plano:", json.dumps(plano, indent=2))
+
             print("📡 Enviada telemetría PLANA:", plano)
 
         # ====================================================
         # 2️⃣ SEGUNDO ENVÍO → PAYLOAD COMPLETO
         # ====================================================
+
+        
         client.publish(topic, json.dumps(payload), qos=1)
+        print("\n🟠 DEBUG payload completo:", json.dumps(payload, indent=2))
         print("📡 Enviado payload COMPLETO")
 
         client.loop(timeout=2.0)
