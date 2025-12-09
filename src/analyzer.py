@@ -259,8 +259,10 @@ def build_json_payload(fs: int, global_result: dict | None, channel_results: Lis
                        ref_markers: List[int], cur_markers: List[int],
                        ref_segments: List[Tuple[int,int]], cur_segments: List[Tuple[int,int]],
                        ref_wav: str | None, cin_wav: str | None) -> dict:
+
     def markers_to_s(mks: List[int]) -> List[float]:
         return [float(np.round(m/fs, 6)) for m in mks]
+
     def segs_to_s(segs: List[Tuple[int,int]]) -> List[dict]:
         out = []
         for a, b in segs:
@@ -269,7 +271,21 @@ def build_json_payload(fs: int, global_result: dict | None, channel_results: Lis
                         "end_s": float(np.round(e, 6)),
                         "dur_s": float(np.round(e - s, 6))})
         return out
-    return {
+
+    # =========================
+    # NUEVO: generar estados por canal
+    # =========================
+    canales_estado = {}
+    for i, cr in enumerate(channel_results):
+        idx = i + 1
+        estado = "PASSED" if cr.get("overall") == "PASSED" else "FAILED"
+        key = f"canal{idx}_estado"
+        canales_estado[key] = estado
+
+    # =========================
+    # JSON normal + keys planas
+    # =========================
+    payload = {
         "app": "AudioCinema",
         "version": "2.0",
         "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
@@ -284,3 +300,9 @@ def build_json_payload(fs: int, global_result: dict | None, channel_results: Lis
         "channels": [{"index": i+1, **_summarize_result(cr)} for i, cr in enumerate(channel_results)],
         "channels_detected": min(len(ref_segments), len(cur_segments)),
     }
+
+    # incorporar los estados planos
+    payload.update(canales_estado)
+
+    return payload
+
